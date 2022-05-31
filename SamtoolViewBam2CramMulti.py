@@ -12,7 +12,11 @@ path = sys.argv[1]
 out=sys.argv[3]
 ref=sys.argv[4]
 outF='/'.join(out.split('/')[:-1])
-AllFiles=[[x] for x in glob(path+'/*bam')]
+AllFiles=[x for x in glob(path+'/*bam')]
+AllOutFiles=[f"{outF}/{x.split('/')[-1].split('.')[0]}.cram" for x in glob(path+'/*bam')]
+
+
+multiList=[[i,o,ref] for i,o in zip(AllFiles,AllOutFiles)]
 stop_threads=False
 
 
@@ -38,7 +42,8 @@ def GetIOusage(outFolder):
         if stop_threads:
             break
 
-def BamCram(file=None, outFile=None, threads=1, ref=None):
+def BamCram(file=None, outFile=None, ref=None):
+    threads=1
     if ref==None or outFile==None or file==None:
         return ['','','','','missing input']
     st=time.time()
@@ -66,13 +71,13 @@ t = Thread(target = GetIOusage, args=(f'{outF}/IostatLog',))
 
 t.start()
 with mp.Pool(cores) as pool:
-    x= pool.starmap(BamCram,AllFiles)
+    x= pool.starmap(BamCram,multiList)
 
     
 with open(out,'w') as o:
     o.write(f'start\tend\tduration\tfile\tfilesizeBam\tfilesizeCram\n')
     for xx in x:
-        o.write(f'{xx[0]}\t{xx[1]}\t{xx[2]}\t{xx[3]}\t{xx[4]}\n')
+        o.write(f'{xx[0]}\t{xx[1]}\t{xx[2]}\t{xx[3]}\t{xx[4]}\t{xx[5]}\n')
         
 stop_threads=True
 
